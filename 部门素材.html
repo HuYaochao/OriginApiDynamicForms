@@ -158,7 +158,7 @@
 
     function fetchDepartments() {
       axios
-        .get("http://。/deps")
+        .get("")
         .then(function (response) {
           if (response.data.code === 200) {
             const total = response.data.data.total;
@@ -242,7 +242,7 @@
       const newDeptTel = document.getElementById("newDeptTel").value;
 
       axios
-        .post("。/dep", {
+        .post("", {
           id: newDeptId,
           name: newDeptName,
           tel: newDeptTel,
@@ -277,7 +277,7 @@
       const editDeptTel = document.getElementById("editDeptTel").value;
 
       axios
-        .put(`http:/。/dep/${editDeptId}`, {
+        .put(`dep/${editDeptId}`, {
           name: editDeptName,
           tel: editDeptTel,
         })
@@ -296,7 +296,7 @@
 
     function deleteDepartment(departmentId) {
       axios
-        .delete(`http://。/dep/${departmentId}`)
+        .delete(`/dep/${departmentId}`)
         .then(function (response) {
           if (response.data.code === 200) {
             fetchDepartments();
