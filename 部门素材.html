@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./lib/bootstrap-3.3.7.css" />
+    <script src="./js/axios.js"></script>
+    <!-- <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script> -->
+    <style>
+      .dialog {
+        width: 400px;
+        height: 230px;
+        text-align: center;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -70%);
+      }
+
+      #app {
+        min-height: 600px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">部门管理系统</h3>
+        </div>
+        <thead>
+          <div class="panel-body form-inline">
+            <label
+              >部门编码:
+              <input type="text" class="form-control" id="id" />
+            </label>
+            <label
+              >部门名称:
+              <input type="text" class="form-control" id="name" />
+            </label>
+            <input
+              type="button"
+              value="搜索"
+              class="btn btn-primary"
+              onclick="searchDepartments()"
+            />
+            <input
+              type="button"
+              value="重置"
+              class="btn btn-primary"
+              onclick="resetForm()"
+            />
+            <label for=""
+              ><span>部门数量统计：</span>
+              <span id="departmentCount">0</span></label
+            >
+            <input
+              type="button"
+              value="添加部门"
+              class="btn btn-primary"
+              onclick="showAddDepartmentDialog()"
+            />
+          </div>
+        </thead>
+      </div>
+      <!-- 表头 -->
+      <table class="table table-bordered table-hover table-striped">
+        <thead>
+          <tr>
+            <th>部门编码:</th>
+            <th>部门名称：</th>
+            <th>部门电话：</th>
+            <th>Operation:</th>
+          </tr>
+        </thead>
+        <tbody id="departmentList"></tbody>
+      </table>
+    </div>
+    <!-- 添加部门对话框 -->
+    <div
+      id="addDepartmentDialog"
+      class="dialog panel panel-primary"
+      style="display: none"
+    >
+      <div class="panel-heading">
+        <h3 class="panel-title">添加部门</h3>
+      </div>
+      <div class="panel-body form-inline">
+        <label
+          >部门编码: <input type="text" class="form-control" id="newDeptId"
+        /></label>
+        <label
+          >部门名称: <input type="text" class="form-control" id="newDeptName"
+        /></label>
+        <label
+          >部门电话: <input type="text" class="form-control" id="newDeptTel"
+        /></label>
+        <div>
+          <input
+            type="button"
+            value="保存"
+            class="btn btn-primary"
+            onclick="addDepartment()"
+          />
+          <input
+            type="button"
+            value="关闭"
+            class="btn btn-primary"
+            onclick="hideAddDepartmentDialog()"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑部门对话框 -->
+    <div
+      id="editDepartmentDialog"
+      class="dialog panel panel-primary"
+      style="display: none"
+    >
+      <div class="panel-heading">
+        <h3 class="panel-title">编辑部门</h3>
+      </div>
+      <div class="panel-body form-inline">
+        <label
+          >部门编码:
+          <input type="text" class="form-control" id="editDeptId" disabled
+        /></label>
+        <label
+          >部门名称: <input type="text" class="form-control" id="editDeptName"
+        /></label>
+        <label
+          >部门电话: <input type="text" class="form-control" id="editDeptTel"
+        /></label>
+        <div>
+          <input
+            type="button"
+            value="保存"
+            class="btn btn-primary"
+            onclick="saveDepartment()"
+          />
+          <input
+            type="button"
+            value="关闭"
+            class="btn btn-primary"
+            onclick="hideEditDepartmentDialog()"
+          />
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      fetchDepartments();
+    });
+
+    function fetchDepartments() {
+      axios
+        .get("http://。/deps")
+        .then(function (response) {
+          if (response.data.code === 200) {
+            const total = response.data.data.total;
+            updateDepartmentCount(total);
+            populateTable(response.data.data.rows);
+          } else {
+            alert("Failed to fetch department data");
+          }
+        })
+        .catch(function (error) {
+          console.error("Error fetching department data:", error);
+        });
+    }
+
+    function updateDepartmentCount(count) {
+      document.getElementById("departmentCount").textContent = count;
+    }
+
+    function populateTable(departments) {
+      const departmentList = document.getElementById("departmentList");
+      departmentList.innerHTML = ""; // 清空现有的表格内容
+      departments.forEach((department) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+      <td>${department.id}</td>
+      <td>${department.name}</td>
+      <td>${department.tel}</td>
+      <td>
+        <button class="btn btn-warning" onclick="showEditDepartmentDialog(${department.id}, '${department.name}', '${department.tel}')">编辑</button>
+        <button class="btn btn-danger" onclick="deleteDepartment(${department.id})">删除</button>
+      </td>
+    `;
+        departmentList.appendChild(row);
+      });
+    }
+
+    function searchDepartments() {
+      const id = document.getElementById("id").value;
+      if (id) {
+        axios
+          .get(`http://。/dep/${id}`)
+          .then(function (response) {
+            if (response.data.code === 200) {
+              const department = response.data.data;
+              populateTable([
+                {
+                  id: id,
+                  name: department.name,
+                  tel: department.tel,
+                },
+              ]);
+            } else {
+              alert("Failed to search department data");
+            }
+          })
+          .catch(function (error) {
+            console.error("Error searching department data:", error);
+          });
+      } else {
+        fetchDepartments(); //获取部门信息
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("id").value = "";
+      document.getElementById("name").value = "";
+      fetchDepartments();
+    }
+
+    function showAddDepartmentDialog() {
+      document.getElementById("addDepartmentDialog").style.display = "block";
+    }
+
+    function hideAddDepartmentDialog() {
+      document.getElementById("addDepartmentDialog").style.display = "none";
+    }
+
+    function addDepartment() {
+      const newDeptId = document.getElementById("newDeptId").value;
+      const newDeptName = document.getElementById("newDeptName").value;
+      const newDeptTel = document.getElementById("newDeptTel").value;
+
+      axios
+        .post("。/dep", {
+          id: newDeptId,
+          name: newDeptName,
+          tel: newDeptTel,
+        })
+        .then(function (response) {
+          if (response.data.code === 200) {
+            fetchDepartments();
+            hideAddDepartmentDialog();
+          } else {
+            alert("Failed to add department");
+          }
+        })
+        .catch(function (error) {
+          console.error("Error adding department:", error);
+        });
+    }
+
+    function showEditDepartmentDialog(id, name, tel) {
+      document.getElementById("editDepartmentDialog").style.display = "block";
+      document.getElementById("editDeptId").value = id;
+      document.getElementById("editDeptName").value = name;
+      document.getElementById("editDeptTel").value = tel;
+    }
+
+    function hideEditDepartmentDialog() {
+      document.getElementById("editDepartmentDialog").style.display = "none";
+    }
+
+    function saveDepartment() {
+      const editDeptId = document.getElementById("editDeptId").value;
+      const editDeptName = document.getElementById("editDeptName").value;
+      const editDeptTel = document.getElementById("editDeptTel").value;
+
+      axios
+        .put(`http:/。/dep/${editDeptId}`, {
+          name: editDeptName,
+          tel: editDeptTel,
+        })
+        .then(function (response) {
+          if (response.data.code === 200) {
+            fetchDepartments();
+            hideEditDepartmentDialog();
+          } else {
+            alert("Failed to update department");
+          }
+        })
+        .catch(function (error) {
+          console.error("Error updating department:", error);
+        });
+    }
+
+    function deleteDepartment(departmentId) {
+      axios
+        .delete(`http://。/dep/${departmentId}`)
+        .then(function (response) {
+          if (response.data.code === 200) {
+            fetchDepartments();
+          } else {
+            alert("Failed to delete department");
+          }
+        })
+        .catch(function (error) {
+          console.error("Error deleting department:", error);
+        });
+    }
+  </script>
+</html>
